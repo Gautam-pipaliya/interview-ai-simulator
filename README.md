@@ -127,13 +127,10 @@ If you want persistent data for SQLite, mount a host volume into `/app/interview
   - `GROQ_API_BASE_URL`
   - `GROQ_MODEL`
   - `DATABASE_URL` (recommended for production with PostgreSQL)
+- `FLASK_DEBUG` = `0`
 
-Render example:
-
-1. Create a new Web Service on Render.
-2. Choose `Docker` environment or use the `Procfile` from this repo.
-3. Set the start command to:
-   ```bash
+Render start command:
+```bash
 gunicorn run:app --bind 0.0.0.0:$PORT --workers 3 --threads 2 --timeout 120
 ```
 4. Set environment variables in Render Dashboard.
