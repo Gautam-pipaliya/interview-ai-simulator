@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: interview-ai-simulator
+    env: docker
+    branch: main
+    dockerfilePath: Dockerfile
+    plan: free
+    buildCommand: docker build -t interview-simulator .
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 3 --threads 2 --timeout 120
+    envVars:
+      - key: SECRET_KEY
+      - key: AI_PROVIDER_DEFAULT
+      - key: GROQ_API_KEY
+      - key: GROQ_API_BASE_URL
+      - key: GROQ_MODEL
+      - key: DATABASE_URL

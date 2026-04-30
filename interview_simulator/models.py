@@ -48,6 +48,7 @@ class Question(db.Model):
     difficulty = db.Column(db.Integer, nullable=False, default=1)
     options_json = db.Column(db.Text)
     correct_option = db.Column(db.String(255))
+    language_code = db.Column(db.String(10), nullable=False, default="en", index=True)
 
     @property
     def difficulty_label(self):
@@ -80,6 +81,7 @@ class InterviewSession(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     category = db.Column(db.String(50), nullable=False, default="All")
     difficulty_level = db.Column(db.String(20), nullable=False, default="All")
+    language_code = db.Column(db.String(10), nullable=False, default="en")
     total_questions = db.Column(db.Integer, nullable=False, default=0)
     average_score = db.Column(db.Float, nullable=False, default=0.0)
     start_time = db.Column(db.DateTime, nullable=False, default=utcnow)

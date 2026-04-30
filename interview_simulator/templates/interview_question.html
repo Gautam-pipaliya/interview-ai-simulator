@@ -2,87 +2,114 @@
 
 {% block content %}
 <section class="question-stage">
-    <div class="row justify-content-center g-4">
-        <div class="col-xl-10 reveal focus-target">
+    <div class="interview-topbar reveal">
+        <div>
+            <span class="kicker">{{ round_label }}</span>
+            <h1>Question {{ question_number }} of {{ total_questions }}</h1>
+        </div>
+        <div class="interview-meter">
+            <span class="timer-badge" id="timerDisplay">{{ timer_seconds }}s</span>
+            <span class="status-chip">{{ language_config.native_name }}</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8 reveal focus-target">
             <div class="panel question-panel">
-                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
-                    <div>
-                        <span class="kicker">Question {{ question_number }} of {{ total_questions }}</span>
-                        <h3 class="mt-2 mb-2">{{ question.prompt }}</h3>
-                        <div class="chip-row">
-                            <span class="status-chip">{{ question.category }}</span>
-                            <span class="status-chip">{{ question.difficulty_label }}</span>
-                            <span class="status-chip">Mode: {{ practice_mode|title }}</span>
-                            {% if selected_level != "All" %}
-                                <span class="status-chip">Selected Level: {{ selected_level }}</span>
-                            {% endif %}
-                            <span class="status-chip">Attempted: {{ attempted_count }}</span>
-                            <span class="status-chip">Skipped: {{ skipped_count }}</span>
-                        </div>
+                <div class="question-prompt-card">
+                    <div class="prompt-meta">
+                        <span>{{ question.category }}</span>
+                        <span>{{ question.difficulty_label }}</span>
+                        <span>{{ question_source|title }}</span>
+                        <span>{{ practice_mode|title }}</span>
                     </div>
-                    <div class="timer-badge" id="timerDisplay">{{ timer_seconds }}s</div>
+                    <h2>{{ question.prompt }}</h2>
+                    <p class="take-time-line">{{ take_time_phrase }}</p>
                 </div>
 
-                <div class="progress mb-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ progress }}">
+                <div class="progress interview-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ progress }}">
                     <div class="progress-bar" id="progressFill" data-progress="{{ progress }}"></div>
                 </div>
-                <p class="small text-muted mb-4">Progress reflects how many questions have been attempted.</p>
 
-                <div class="d-flex flex-wrap gap-2 mb-4 align-items-center">
-                    <button class="btn btn-soft" id="speakQuestion" type="button">Read Question Aloud</button>
-                    <button class="btn btn-soft" id="startVoiceAnswer" type="button">Start Voice Answer</button>
-                    <button class="btn btn-outline-secondary" id="stopVoiceAnswer" type="button" disabled>Stop Listening</button>
-                    <button class="btn btn-soft" id="toggleFocusMode" type="button">Focus Mode</button>
-                    <span class="mono-tag">Shortcuts: 1-4 option, N next, P previous, F focus</span>
-                </div>
-
-                <div class="mini-panel mb-4" id="voiceStatusPanel" aria-live="polite">
-                    <h6 class="mb-2">AI Voice Bot</h6>
-                    <div class="voice-status-row mb-2">
+                <div class="voice-command-center" id="voiceStatusPanel" aria-live="polite">
+                    <div class="voice-copy">
                         <span class="voice-dot" id="voiceDot" aria-hidden="true"></span>
-                        <p class="mb-0" id="voiceStatusText">Ready: click "Read Question Aloud" and answer by voice.</p>
+                        <div>
+                            <h5>AI Voice Bot</h5>
+                            <p id="voiceStatusText">Ready to read the question in {{ language_config.name }}.</p>
+                        </div>
+                    </div>
+                    <div class="voice-actions">
+                        <button class="btn btn-soft" id="speakQuestion" type="button">Read Question Aloud</button>
+                        <button class="btn btn-soft" id="pauseSpeech" type="button" disabled>Pause</button>
+                        <button class="btn btn-soft" id="resumeSpeech" type="button" disabled>Resume</button>
+                        <button class="btn btn-soft" id="startVoiceAnswer" type="button">Start Voice Answer</button>
+                        <button class="btn btn-outline-secondary" id="stopVoiceAnswer" type="button" disabled>Stop Listening</button>
                     </div>
                     <textarea
-                        class="form-control"
+                        class="form-control voice-transcript"
                         id="voiceTranscript"
                         rows="3"
-                        placeholder="Your voice transcript appears here..."
+                        placeholder="Voice transcript appears here..."
                     ></textarea>
-                    <p class="small text-muted mt-2 mb-0">For MCQ, say option text or "option 1", "option 2", etc. For text answers, transcript is copied to your answer box automatically.</p>
                 </div>
 
-                <form method="post" id="questionForm">
-                    {% if question.is_mcq %}
-                        <div class="mb-4">
-                            <label class="form-label">Choose One Option</label>
-                            <div class="mcq-options">
-                                {% for option in question_options %}
-                                    <label class="mcq-option" for="option_{{ loop.index }}">
-                                        <input
-                                            class="form-check-input"
-                                            type="radio"
-                                            id="option_{{ loop.index }}"
-                                            name="selected_option"
-                                            value="{{ option }}"
-                                            {% if selected_answer == option %}checked{% endif %}
-                                        >
-                                        <span>{{ option }}</span>
-                                    </label>
-                                {% endfor %}
+                <form method="post" id="questionForm" class="mt-4">
+                    {% if is_coding_round %}
+                        <div class="coding-workspace">
+                            <div class="coding-toolbar">
+                                <div>
+                                    <label class="form-label" for="programmingLanguageSelect">Programming Language</label>
+                                    <select class="form-select" id="programmingLanguageSelect" name="programming_language">
+                                        {% for language in programming_languages %}
+                                            <option
+                                                value="{{ language.key }}"
+                                                data-mime="{{ language.mime }}"
+                                                data-mode="{{ language.mode }}"
+                                                data-can-run="{{ 'true' if language.can_run else 'false' }}"
+                                                {% if selected_programming_language == language.key %}selected{% endif %}
+                                            >
+                                                {{ language.label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="coding-toolbar-actions">
+                                    <button class="btn btn-soft" id="runCodeButton" type="button">Run Code</button>
+                                    <button class="btn btn-outline-secondary" id="resetCodeButton" type="button">Reset Starter</button>
+                                </div>
                             </div>
-                            <p class="text-muted mt-2 mb-0">Leaving an option blank is treated as incorrect on final submission.</p>
+                            <textarea class="form-control code-editor-textarea" id="codeEditor" name="code_answer" rows="14" spellcheck="false">{{ selected_answer or starter_code }}</textarea>
+                            <div class="code-output-panel" id="codeOutput" aria-live="polite">
+                                Run JavaScript directly in the browser. For Python, Java, and C++, use this as an interview editor and explain complexity in comments.
+                            </div>
+                        </div>
+                    {% elif question.is_mcq %}
+                        <div class="mcq-options">
+                            {% for option in question_options %}
+                                <label class="mcq-option" for="option_{{ loop.index }}">
+                                    <input
+                                        class="form-check-input"
+                                        type="radio"
+                                        id="option_{{ loop.index }}"
+                                        name="selected_option"
+                                        value="{{ option }}"
+                                        {% if selected_answer == option %}checked{% endif %}
+                                    >
+                                    <span class="option-index">{{ loop.index }}</span>
+                                    <span>{{ option }}</span>
+                                </label>
+                            {% endfor %}
                         </div>
                     {% else %}
-                        <div class="mb-4">
-                            <label class="form-label" for="answerBox">Your Answer</label>
-                            <textarea class="form-control" id="answerBox" name="answer" rows="8" placeholder="Type your answer here...">{{ selected_answer }}</textarea>
-                        </div>
+                        <label class="form-label" for="answerBox">Your Answer</label>
+                        <textarea class="form-control answer-box" id="answerBox" name="answer" rows="8" placeholder="Type your answer here...">{{ selected_answer }}</textarea>
                     {% endif %}
 
                     <input type="hidden" name="time_taken" id="timeTaken" value="0">
                     <input type="hidden" name="voice_answer" id="voiceAnswer" value="">
 
-                    <div class="d-grid d-md-flex gap-2 flex-wrap">
+                    <div class="interview-actions">
                         <button class="btn btn-soft btn-lg" type="submit" formaction="{{ url_for('interview.previous_question') }}" formmethod="post">Previous Skipped</button>
                         <button class="btn btn-soft btn-lg" type="submit" formaction="{{ url_for('interview.next_question') }}" formmethod="post">Next / Skip</button>
                         <button class="btn btn-outline-secondary btn-lg" type="submit" formaction="{{ url_for('interview.jump_skipped') }}" formmethod="post">Jump First Skipped</button>
@@ -90,32 +117,61 @@
                         <a class="btn btn-outline-danger btn-lg" href="{{ url_for('interview.setup') }}">Restart Round</a>
                     </div>
                 </form>
+            </div>
+        </div>
 
-                <div class="mini-panel mt-4">
-                    <h6 class="mb-2">Question Tracker</h6>
-                    <div class="chip-row">
+        <div class="col-xl-4 reveal">
+            <aside class="panel interview-side sticky-soft">
+                <button class="btn btn-soft w-100 mb-3" id="toggleFocusMode" type="button">Focus Mode</button>
+                <div class="side-stat-grid">
+                    <article class="mini-panel">
+                        <span class="metric-label">Attempted</span>
+                        <h4>{{ attempted_count }}</h4>
+                    </article>
+                    <article class="mini-panel">
+                        <span class="metric-label">Skipped</span>
+                        <h4>{{ skipped_count }}</h4>
+                    </article>
+                </div>
+                <div class="mini-panel mt-3">
+                    <span class="metric-label">Question Tracker</span>
+                    <div class="question-dots">
                         {% for answered in attempt_flags %}
-                            <span class="status-chip {% if answered %}skill-ok{% else %}skill-miss{% endif %}">
-                                Q{{ loop.index }} {% if answered %}done{% else %}skip{% endif %}
-                            </span>
+                            <span class="question-dot {% if answered %}is-done{% endif %}" title="Question {{ loop.index }}">{{ loop.index }}</span>
                         {% endfor %}
                     </div>
                 </div>
-            </div>
+                <div class="mini-panel mt-3">
+                    <span class="metric-label">Keyboard Flow</span>
+                    <p class="mb-0 text-muted">Use 1-4 for MCQ options, N for next, P for previous skipped, and F for focus.</p>
+                </div>
+            </aside>
         </div>
     </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
+{% if is_coding_round %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+{% endif %}
 <script id="interview-question-data" type="application/json">
 {
     "timerSeconds": {{ timer_seconds | int | tojson }},
     "prompt": {{ question.prompt | tojson }},
+    "takeTimePhrase": {{ take_time_phrase | tojson }},
+    "speechCode": {{ language_config.speech_code | tojson }},
     "nextUrl": {{ url_for('interview.next_question') | tojson }},
     "previousUrl": {{ url_for('interview.previous_question') | tojson }},
     "submitUrl": {{ url_for('interview.submit_answer') | tojson }},
-    "isMcq": {{ question.is_mcq | tojson }}
+    "isMcq": {{ question.is_mcq | tojson }},
+    "isCoding": {{ is_coding_round | tojson }},
+    "starterCode": {{ starter_code | tojson }}
 }
 </script>
 <script>
@@ -124,6 +180,8 @@
     const form = document.getElementById("questionForm");
     const timeTakenInput = document.getElementById("timeTaken");
     const speakButton = document.getElementById("speakQuestion");
+    const pauseButton = document.getElementById("pauseSpeech");
+    const resumeButton = document.getElementById("resumeSpeech");
     const startVoiceButton = document.getElementById("startVoiceAnswer");
     const stopVoiceButton = document.getElementById("stopVoiceAnswer");
     const focusButton = document.getElementById("toggleFocusMode");
@@ -134,100 +192,67 @@
     const voiceAnswer = document.getElementById("voiceAnswer");
     const voiceStatusText = document.getElementById("voiceStatusText");
     const voiceDot = document.getElementById("voiceDot");
-
+    const codeEditorArea = document.getElementById("codeEditor");
+    const codeLanguageSelect = document.getElementById("programmingLanguageSelect");
+    const runCodeButton = document.getElementById("runCodeButton");
+    const resetCodeButton = document.getElementById("resetCodeButton");
+    const codeOutput = document.getElementById("codeOutput");
     const config = dataElement ? JSON.parse(dataElement.textContent) : {};
     const isMcq = Boolean(config.isMcq);
+    const isCoding = Boolean(config.isCoding);
+    let codeMirror = null;
 
     const setVoiceStatus = (text) => {
-        if (voiceStatusText) {
-            voiceStatusText.textContent = text;
-        }
+        if (voiceStatusText) voiceStatusText.textContent = text;
     };
 
     const setVoiceState = (state) => {
-        if (!voiceDot) {
-            return;
-        }
-
-        voiceDot.classList.remove("is-listening", "is-speaking");
-        if (state === "listening") {
-            voiceDot.classList.add("is-listening");
-        }
-        if (state === "speaking") {
-            voiceDot.classList.add("is-speaking");
-        }
+        if (!voiceDot) return;
+        voiceDot.classList.remove("is-listening", "is-speaking", "is-paused");
+        if (state === "listening") voiceDot.classList.add("is-listening");
+        if (state === "speaking") voiceDot.classList.add("is-speaking");
+        if (state === "paused") voiceDot.classList.add("is-paused");
     };
 
     const normalize = (value) => String(value || "").trim().toLowerCase();
 
     const selectMcqByTranscript = (transcript) => {
         const compact = normalize(transcript);
-        if (!compact) {
-            return false;
-        }
-
         const optionInputs = Array.from(document.querySelectorAll('input[name="selected_option"]'));
-        if (optionInputs.length === 0) {
-            return false;
-        }
-
-        const ordinalMap = {
-            "one": 1,
-            "two": 2,
-            "three": 3,
-            "four": 4,
-            "1": 1,
-            "2": 2,
-            "3": 3,
-            "4": 4,
-        };
-
+        const ordinalMap = { one: 1, two: 2, three: 3, four: 4, "1": 1, "2": 2, "3": 3, "4": 4 };
         const optionMatch = compact.match(/(?:option\s*)?(one|two|three|four|[1-4])\b/);
         if (optionMatch) {
-            const mapped = ordinalMap[optionMatch[1]];
-            const input = optionInputs[mapped - 1];
+            const input = optionInputs[ordinalMap[optionMatch[1]] - 1];
             if (input) {
                 input.checked = true;
                 input.dispatchEvent(new Event("change", { bubbles: true }));
                 return true;
             }
         }
-
-        for (const input of optionInputs) {
+        return optionInputs.some((input) => {
             const value = normalize(input.value);
             if (value && (compact === value || compact.includes(value) || value.includes(compact))) {
                 input.checked = true;
                 input.dispatchEvent(new Event("change", { bubbles: true }));
                 return true;
             }
-        }
-
-        return false;
+            return false;
+        });
     };
 
     const syncTranscriptToAnswer = (text) => {
         const transcript = String(text || "").trim();
-        if (!transcript) {
-            return;
-        }
-
-        if (voiceTranscript) {
-            voiceTranscript.value = transcript;
-        }
-
-        if (voiceAnswer) {
-            voiceAnswer.value = transcript;
-        }
-
-        if (!isMcq && answerBox) {
-            answerBox.value = transcript;
-        }
-
+        if (!transcript) return;
+        if (voiceTranscript) voiceTranscript.value = transcript;
+        if (voiceAnswer) voiceAnswer.value = transcript;
         if (isMcq) {
             const matched = selectMcqByTranscript(transcript);
-            setVoiceStatus(matched ? "Voice matched an option." : "Transcript captured. Select an option if needed.");
-        } else {
+            setVoiceStatus(matched ? "Voice matched an option." : "Transcript captured. Select the option manually if needed.");
+        } else if (!isCoding && answerBox) {
+            answerBox.value = transcript;
             setVoiceStatus("Transcript captured and copied to your answer box.");
+        } else {
+            setVoiceStatus("Transcript captured for reference while coding.");
         }
     };
 
@@ -241,143 +266,152 @@
             alert("Text-to-speech is not supported in this browser.");
             return;
         }
-
-        const text = String(config.prompt || "");
-        if (!text) {
-            return;
-        }
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.95;
-        utterance.pitch = 1;
+        const utterance = new SpeechSynthesisUtterance(`${config.prompt || ""}. ${config.takeTimePhrase || ""}`);
+        utterance.lang = config.speechCode || "en-US";
+        utterance.rate = 0.92;
+        utterance.pitch = 1.02;
         utterance.onstart = () => {
             setVoiceState("speaking");
-            setVoiceStatus("AI is speaking the question...");
+            setVoiceStatus("AI interviewer is speaking...");
+            if (pauseButton) pauseButton.disabled = false;
+            if (resumeButton) resumeButton.disabled = true;
         };
         utterance.onend = () => {
             setVoiceState("idle");
-            setVoiceStatus("AI finished speaking. You can answer by voice now.");
+            setVoiceStatus("AI finished speaking. You can answer now.");
+            if (pauseButton) pauseButton.disabled = true;
+            if (resumeButton) resumeButton.disabled = true;
         };
         utterance.onerror = () => {
             setVoiceState("idle");
             setVoiceStatus("Unable to read the question aloud in this browser.");
         };
-
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
     };
 
-    if (speakButton) {
-        speakButton.addEventListener("click", speakQuestion);
-    }
+    speakButton?.addEventListener("click", speakQuestion);
+    pauseButton?.addEventListener("click", () => {
+        window.speechSynthesis?.pause();
+        setVoiceState("paused");
+        setVoiceStatus("AI voice paused.");
+        pauseButton.disabled = true;
+        resumeButton.disabled = false;
+    });
+    resumeButton?.addEventListener("click", () => {
+        window.speechSynthesis?.resume();
+        setVoiceState("speaking");
+        setVoiceStatus("AI voice resumed.");
+        pauseButton.disabled = false;
+        resumeButton.disabled = true;
+    });
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = SpeechRecognition ? new SpeechRecognition() : null;
-
     if (recognition) {
-        recognition.lang = "en-US";
-        recognition.continuous = false;
+        recognition.lang = config.speechCode || "en-US";
+        recognition.continuous = true;
         recognition.interimResults = true;
-
         recognition.onstart = () => {
             setVoiceState("listening");
-            if (startVoiceButton) {
-                startVoiceButton.disabled = true;
-            }
-            if (stopVoiceButton) {
-                stopVoiceButton.disabled = false;
-            }
-            setVoiceStatus("Listening... speak your answer.");
+            startVoiceButton.disabled = true;
+            stopVoiceButton.disabled = false;
+            setVoiceStatus("Listening... speak naturally.");
         };
-
         recognition.onresult = (event) => {
             let transcript = "";
-            for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            for (let i = 0; i < event.results.length; i += 1) {
                 transcript += event.results[i][0].transcript;
             }
-            if (voiceTranscript) {
-                voiceTranscript.value = transcript.trim();
-            }
+            if (voiceTranscript) voiceTranscript.value = transcript.trim();
             if (event.results[event.results.length - 1].isFinal) {
                 syncTranscriptToAnswer(transcript);
-            } else {
-                setVoiceStatus("Listening... capturing transcript.");
             }
         };
-
         recognition.onerror = (event) => {
             setVoiceState("idle");
-            const errorCode = event && event.error ? event.error : "unknown";
-            setVoiceStatus(`Voice capture error: ${errorCode}. You can type your answer.`);
+            setVoiceStatus(`Voice capture error: ${event?.error || "unknown"}. You can type your answer.`);
         };
-
         recognition.onend = () => {
             setVoiceState("idle");
-            if (startVoiceButton) {
-                startVoiceButton.disabled = false;
-            }
-            if (stopVoiceButton) {
-                stopVoiceButton.disabled = true;
-            }
+            startVoiceButton.disabled = false;
+            stopVoiceButton.disabled = true;
         };
     } else {
-        if (startVoiceButton) {
-            startVoiceButton.disabled = true;
-        }
-        if (stopVoiceButton) {
-            stopVoiceButton.disabled = true;
-        }
+        startVoiceButton.disabled = true;
+        stopVoiceButton.disabled = true;
         setVoiceStatus("Speech recognition is not supported in this browser. Use typing mode.");
     }
-
-    if (startVoiceButton) {
-        startVoiceButton.addEventListener("click", () => {
-            if (!recognition) {
-                return;
-            }
-            try {
-                recognition.start();
-            } catch (error) {
-                setVoiceStatus("Voice recognition is already running.");
-            }
-        });
-    }
-
-    if (stopVoiceButton) {
-        stopVoiceButton.addEventListener("click", () => {
-            if (!recognition) {
-                return;
-            }
-            recognition.stop();
-            setVoiceState("idle");
-            setVoiceStatus("Stopped listening.");
-        });
-    }
-
-    if (voiceTranscript) {
-        voiceTranscript.addEventListener("input", (event) => {
-            syncTranscriptToAnswer(event.target.value);
-        });
-    }
+    startVoiceButton?.addEventListener("click", () => {
+        try {
+            recognition?.start();
+        } catch (error) {
+            setVoiceStatus("Voice recognition is already running.");
+        }
+    });
+    stopVoiceButton?.addEventListener("click", () => recognition?.stop());
+    voiceTranscript?.addEventListener("input", (event) => syncTranscriptToAnswer(event.target.value));
 
     const toggleFocusMode = () => {
         document.body.classList.toggle("interview-focus-mode");
-        if (!focusButton) {
-            return;
+        if (focusButton) {
+            focusButton.textContent = document.body.classList.contains("interview-focus-mode") ? "Exit Focus Mode" : "Focus Mode";
         }
-
-        const enabled = document.body.classList.contains("interview-focus-mode");
-        focusButton.textContent = enabled ? "Exit Focus Mode" : "Focus Mode";
     };
+    focusButton?.addEventListener("click", toggleFocusMode);
 
-    if (focusButton) {
-        focusButton.addEventListener("click", toggleFocusMode);
+    if (isCoding && codeEditorArea && window.CodeMirror) {
+        const selected = codeLanguageSelect.options[codeLanguageSelect.selectedIndex];
+        codeMirror = window.CodeMirror.fromTextArea(codeEditorArea, {
+            lineNumbers: true,
+            mode: selected?.dataset.mime || "text/x-python",
+            theme: "material-darker",
+            indentUnit: 4,
+            tabSize: 4,
+            lineWrapping: true,
+        });
+        codeMirror.setSize("100%", 420);
+        codeMirror.on("change", () => codeMirror.save());
     }
 
-    const submitTo = (targetUrl) => {
-        if (!targetUrl) {
+    codeLanguageSelect?.addEventListener("change", () => {
+        const selected = codeLanguageSelect.options[codeLanguageSelect.selectedIndex];
+        if (codeMirror) codeMirror.setOption("mode", selected?.dataset.mime || "text/x-python");
+    });
+
+    resetCodeButton?.addEventListener("click", () => {
+        if (codeMirror) {
+            codeMirror.setValue(config.starterCode || "");
+            codeMirror.save();
+        } else if (codeEditorArea) {
+            codeEditorArea.value = config.starterCode || "";
+        }
+    });
+
+    runCodeButton?.addEventListener("click", () => {
+        const selected = codeLanguageSelect?.options[codeLanguageSelect.selectedIndex];
+        const canRun = selected?.dataset.canRun === "true";
+        const code = codeMirror ? codeMirror.getValue() : (codeEditorArea?.value || "");
+        if (!canRun) {
+            codeOutput.textContent = "Browser execution is enabled for JavaScript in this project. For this language, submit code and explain complexity or run it in your local compiler.";
             return;
         }
+        const logs = [];
+        const fakeConsole = {
+            log: (...args) => logs.push(args.map(String).join(" ")),
+        };
+        try {
+            const runner = new Function("console", code);
+            runner(fakeConsole);
+            codeOutput.textContent = logs.length ? logs.join("\n") : "Code ran successfully with no console output.";
+        } catch (error) {
+            codeOutput.textContent = `Runtime error: ${error.message}`;
+        }
+    });
+
+    const submitTo = (targetUrl) => {
+        if (!targetUrl) return;
+        if (codeMirror) codeMirror.save();
         form.action = targetUrl;
         form.method = "post";
         form.submit();
@@ -385,38 +419,22 @@
 
     document.addEventListener("keydown", (event) => {
         const active = document.activeElement;
-        const isTypingTarget = active && (
-            active.tagName === "TEXTAREA"
-            || (active.tagName === "INPUT" && active.type !== "radio")
-        );
-
+        const isTypingTarget = active && (active.tagName === "TEXTAREA" || active.tagName === "INPUT" || active.classList.contains("CodeMirror-code"));
         if (event.key.toLowerCase() === "f" && !event.altKey && !event.ctrlKey && !event.metaKey) {
             event.preventDefault();
             toggleFocusMode();
             return;
         }
-
-        if (isTypingTarget) {
+        if (isTypingTarget) return;
+        if (isMcq && /^[1-4]$/.test(event.key)) {
+            const optionInput = document.getElementById(`option_${event.key}`);
+            if (optionInput) optionInput.checked = true;
             return;
         }
-
-        if (isMcq && /^[1-9]$/.test(event.key)) {
-            const selectedIndex = Number(event.key);
-            const optionInput = document.getElementById(`option_${selectedIndex}`);
-            if (optionInput) {
-                optionInput.checked = true;
-                optionInput.dispatchEvent(new Event("change", { bubbles: true }));
-            }
-            return;
-        }
-
         if (event.key.toLowerCase() === "n") {
             event.preventDefault();
             submitTo(String(config.nextUrl || ""));
-            return;
-        }
-
-        if (event.key.toLowerCase() === "p") {
+        } else if (event.key.toLowerCase() === "p") {
             event.preventDefault();
             submitTo(String(config.previousUrl || ""));
         }
@@ -424,47 +442,36 @@
 
     const totalSeconds = Number(config.timerSeconds || 90);
     let remainingSeconds = totalSeconds;
-
     const updateTimer = () => {
         timerDisplay.textContent = `${remainingSeconds}s`;
         timerDisplay.classList.toggle("is-danger", remainingSeconds <= 15);
     };
-
     updateTimer();
-
     const timerId = setInterval(() => {
         remainingSeconds -= 1;
-
         if (remainingSeconds <= 0) {
             clearInterval(timerId);
             remainingSeconds = 0;
             updateTimer();
             timeTakenInput.value = totalSeconds;
-            form.action = String(config.nextUrl || "");
-            form.submit();
+            submitTo(String(config.nextUrl || ""));
             return;
         }
-
         updateTimer();
     }, 1000);
 
     form.addEventListener("submit", () => {
-        const spent = totalSeconds - remainingSeconds;
-        timeTakenInput.value = spent < 0 ? 0 : spent;
-
-        if (!isMcq && voiceAnswer && answerBox && !String(answerBox.value || "").trim()) {
+        if (codeMirror) codeMirror.save();
+        timeTakenInput.value = Math.max(0, totalSeconds - remainingSeconds);
+        if (!isMcq && !isCoding && voiceAnswer && answerBox && !String(answerBox.value || "").trim()) {
             answerBox.value = String(voiceAnswer.value || "").trim();
         }
-
         clearInterval(timerId);
     });
 
-    // Read question automatically to create a true voice-bot flow.
-    if (window.speechSynthesis) {
-        window.setTimeout(() => {
-            speakQuestion();
-        }, 250);
-    }
+    window.setTimeout(() => {
+        if (window.speechSynthesis) speakQuestion();
+    }, 350);
 })();
 </script>
 {% endblock %}

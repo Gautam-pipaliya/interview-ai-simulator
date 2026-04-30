@@ -15,6 +15,25 @@ def _mcq(category, difficulty, prompt, ideal_answer, correct, option2, option3, 
         "ideal_answer": ideal_answer,
         "options": [correct, option2, option3, option4],
         "correct_option": correct,
+        "language_code": "en",
+    }
+
+
+def _localized_mcq(language_code, category, difficulty, prompt, ideal_answer, correct, option2, option3, option4):
+    item = _mcq(category, difficulty, prompt, ideal_answer, correct, option2, option3, option4)
+    item["language_code"] = language_code
+    return item
+
+
+def _open_question(category, difficulty, prompt, ideal_answer, language_code="en"):
+    return {
+        "category": category,
+        "difficulty": difficulty,
+        "prompt": prompt,
+        "ideal_answer": ideal_answer,
+        "options": [],
+        "correct_option": None,
+        "language_code": language_code,
     }
 
 
@@ -114,6 +133,97 @@ BEHAVIORAL_BASE_QUESTIONS = [
 ]
 
 
+CODING_QUESTIONS = [
+    _open_question(
+        "Coding",
+        1,
+        "Write a function that returns the sum of all even numbers in an array.",
+        "Iterate through the array, filter even values, accumulate the sum, and return it. Mention empty array handling.",
+    ),
+    _open_question(
+        "Coding",
+        1,
+        "Given a string, return True if it is a palindrome after ignoring spaces and case.",
+        "Normalize the string, compare it with its reverse, and handle empty input safely.",
+    ),
+    _open_question(
+        "Coding",
+        2,
+        "Solve Two Sum: return indices of two numbers that add up to the target.",
+        "Use a hash map from value to index and scan once for O(n) time.",
+    ),
+    _open_question(
+        "Coding",
+        2,
+        "Validate parentheses containing (), {}, and [] brackets.",
+        "Use a stack, push opening brackets, and verify every closing bracket matches the stack top.",
+    ),
+    _open_question(
+        "Coding",
+        2,
+        "Return the first non-repeating character in a string.",
+        "Count frequencies, then scan again to find the first character with frequency one.",
+    ),
+    _open_question(
+        "Coding",
+        3,
+        "Merge overlapping intervals and return the compacted list.",
+        "Sort by start time, keep a merged list, and extend the previous interval when ranges overlap.",
+    ),
+    _open_question(
+        "Coding",
+        3,
+        "Find the length of the longest substring without repeating characters.",
+        "Use a sliding window with a last-seen map and update the left boundary on duplicate characters.",
+    ),
+    _open_question(
+        "Coding",
+        3,
+        "Implement LRU cache with get and put operations in O(1) time.",
+        "Combine a hash map with a doubly linked list or ordered map to track recency.",
+    ),
+]
+
+
+MULTILINGUAL_QUESTIONS = [
+    _localized_mcq("hi", "HR", 1, "अपने बारे में बताने का सबसे अच्छा तरीका क्या है?", "संक्षिप्त परिचय, कौशल, उपलब्धि और भूमिका से जुड़ाव बताएं.", "संक्षिप्त प्रोफाइल, कौशल, उपलब्धि और भूमिका से जुड़ाव", "केवल परिवार और शहर की जानकारी", "सबसे पहले वेतन की मांग", "बहुत लंबी निजी कहानी"),
+    _localized_mcq("hi", "HR", 2, "कमजोरी के बारे में पूछे जाने पर बेहतर उत्तर क्या है?", "एक वास्तविक कमजोरी और उसे सुधारने की कार्रवाई बताएं.", "कमजोरी और सुधार की योजना बताएं", "कहें कि कोई कमजोरी नहीं है", "केवल दूसरों को दोष दें", "विषय बदल दें"),
+    _localized_mcq("hi", "Aptitude", 1, "श्रृंखला पूरी करें: 5, 10, 15, 20, ?", "हर बार 5 जोड़ा गया है.", "25", "30", "22", "24"),
+    _localized_mcq("hi", "Aptitude", 2, "यदि 20 प्रतिशत x का 40 है, तो x क्या होगा?", "x = 40 / 0.2 = 200.", "200", "160", "180", "240"),
+    _localized_mcq("hi", "Technical", 1, "Python क्या है?", "Python एक उच्च-स्तरीय interpreted programming language है.", "एक उच्च-स्तरीय interpreted programming language", "हार्डवेयर डिजाइन टूल", "केवल डेटाबेस इंजन", "ब्राउज़र extension format"),
+    _localized_mcq("hi", "Technical", 2, "Python में List और Tuple का मुख्य अंतर क्या है?", "List mutable होती है और Tuple immutable होता है.", "List mutable है, Tuple immutable है", "दोनों immutable हैं", "Tuple mutable है, List immutable है", "कोई अंतर नहीं"),
+    _open_question("Coding", 1, "ऐसा function लिखें जो array में मौजूद सभी even numbers का sum return करे.", "Array पर iterate करें, even values filter करें, sum accumulate करें और empty array handle करें.", "hi"),
+    _open_question("Coding", 2, "Two Sum हल करें: target बनाने वाले दो numbers के indices return करें.", "Hash map का उपयोग करें ताकि solution O(n) time में मिले.", "hi"),
+
+    _localized_mcq("gu", "HR", 1, "તમારા વિશે કહેવાનું શ્રેષ્ઠ માળખું શું છે?", "ટૂંકો પરિચય, કુશળતા, સિદ્ધિ અને ભૂમિકા સાથેનો જોડાણ બતાવો.", "ટૂંકો પ્રોફાઇલ, કુશળતા, સિદ્ધિ અને ભૂમિકા જોડાણ", "ફક્ત પરિવાર અને શહેરની માહિતી", "સૌ પ્રથમ પગારની માંગ", "લાંબી વ્યક્તિગત વાર્તા"),
+    _localized_mcq("gu", "HR", 2, "નબળાઈ વિશે પૂછવામાં આવે ત્યારે શ્રેષ્ઠ જવાબ કયો?", "ખરી નબળાઈ અને તેને સુધારવા માટેની કાર્યવાહી જણાવો.", "નબળાઈ અને સુધારાની યોજના જણાવો", "કહો કે કોઈ નબળાઈ નથી", "બધા દોષ ટીમને આપો", "વિષય બદલી દો"),
+    _localized_mcq("gu", "Aptitude", 1, "શ્રેણી પૂર્ણ કરો: 5, 10, 15, 20, ?", "દરેક પગલે 5 ઉમેરાય છે.", "25", "30", "22", "24"),
+    _localized_mcq("gu", "Aptitude", 2, "જો x નો 20 ટકા 40 છે, તો x કેટલું?", "x = 40 / 0.2 = 200.", "200", "160", "180", "240"),
+    _localized_mcq("gu", "Technical", 1, "Python શું છે?", "Python ઉચ્ચ-સ્તરની interpreted programming language છે.", "ઉચ્ચ-સ્તરની interpreted programming language", "hardware design tool", "ફક્ત database engine", "browser extension format"),
+    _localized_mcq("gu", "Technical", 2, "Python માં List અને Tuple વચ્ચેનો મુખ્ય તફાવત શું છે?", "List mutable છે અને Tuple immutable છે.", "List mutable છે, Tuple immutable છે", "બંને immutable છે", "Tuple mutable છે, List immutable છે", "કોઈ તફાવત નથી"),
+    _open_question("Coding", 1, "Array માં રહેલા બધા even numbers નો sum return કરતું function લખો.", "Array iterate કરો, even values filter કરો, sum accumulate કરો અને empty array handle કરો.", "gu"),
+    _open_question("Coding", 2, "Two Sum ઉકેલો: target બને તેવા બે numbers ના indices return કરો.", "O(n) time માટે value થી index સુધી hash map વાપરો.", "gu"),
+
+    _localized_mcq("mr", "HR", 1, "स्वतःबद्दल सांगण्यासाठी सर्वोत्तम रचना कोणती?", "लहान परिचय, कौशल्ये, उपलब्धी आणि भूमिकेशी जुळणारे मुद्दे सांगा.", "लहान प्रोफाइल, कौशल्ये, उपलब्धी आणि भूमिका जुळवणी", "फक्त कुटुंब आणि शहराची माहिती", "सुरुवातीलाच पगार अपेक्षा", "लांब वैयक्तिक कथा"),
+    _localized_mcq("mr", "HR", 2, "कमकुवतपणाबद्दल विचारल्यास सर्वोत्तम उत्तर काय?", "खरा कमकुवतपणा आणि सुधारण्यासाठीची कृती सांगा.", "कमकुवतपणा आणि सुधार योजना सांगा", "कमकुवतपणा नाही असे सांगा", "टीमला दोष द्या", "विषय बदला"),
+    _localized_mcq("mr", "Aptitude", 1, "मालिका पूर्ण करा: 5, 10, 15, 20, ?", "प्रत्येक वेळी 5 वाढते.", "25", "30", "22", "24"),
+    _localized_mcq("mr", "Aptitude", 2, "जर x चे 20 टक्के 40 असेल, तर x किती?", "x = 40 / 0.2 = 200.", "200", "160", "180", "240"),
+    _localized_mcq("mr", "Technical", 1, "Python म्हणजे काय?", "Python ही high-level interpreted programming language आहे.", "high-level interpreted programming language", "hardware design tool", "फक्त database engine", "browser extension format"),
+    _localized_mcq("mr", "Technical", 2, "Python मधील List आणि Tuple यातील मुख्य फरक काय?", "List mutable असते आणि Tuple immutable असते.", "List mutable, Tuple immutable", "दोन्ही immutable", "Tuple mutable, List immutable", "काहीही फरक नाही"),
+    _open_question("Coding", 1, "Array मधील सर्व even numbers ची बेरीज return करणारे function लिहा.", "Array iterate करा, even values filter करा, sum accumulate करा आणि empty array handle करा.", "mr"),
+    _open_question("Coding", 2, "Two Sum सोडवा: target बनवणाऱ्या दोन numbers चे indices return करा.", "O(n) time साठी hash map वापरा.", "mr"),
+
+    _localized_mcq("te", "HR", 1, "మీ గురించి చెప్పడానికి ఉత్తమ నిర్మాణం ఏది?", "చిన్న పరిచయం, నైపుణ్యాలు, సాధన, పాత్రతో సరిపోలిక చెప్పండి.", "చిన్న ప్రొఫైల్, నైపుణ్యాలు, సాధన, పాత్ర సరిపోలిక", "కుటుంబం మరియు ఊరి వివరాలు మాత్రమే", "ముందుగా జీతం అడగడం", "చాలా పొడవైన వ్యక్తిగత కథ"),
+    _localized_mcq("te", "HR", 2, "బలహీనత గురించి అడిగితే ఉత్తమ సమాధానం ఏమిటి?", "నిజమైన బలహీనత మరియు దాన్ని మెరుగుపరచడానికి చర్య చెప్పండి.", "బలహీనత మరియు మెరుగుదల ప్రణాళిక చెప్పండి", "నాకు బలహీనత లేదు అని చెప్పండి", "టీమ్‌ను మాత్రమే నిందించండి", "విషయం మార్చండి"),
+    _localized_mcq("te", "Aptitude", 1, "సిరీస్ పూర్తి చేయండి: 5, 10, 15, 20, ?", "ప్రతి దశలో 5 చొప్పున పెరుగుతుంది.", "25", "30", "22", "24"),
+    _localized_mcq("te", "Aptitude", 2, "x లో 20 శాతం 40 అయితే, x ఎంత?", "x = 40 / 0.2 = 200.", "200", "160", "180", "240"),
+    _localized_mcq("te", "Technical", 1, "Python అంటే ఏమిటి?", "Python ఒక high-level interpreted programming language.", "high-level interpreted programming language", "hardware design tool", "కేవలం database engine", "browser extension format"),
+    _localized_mcq("te", "Technical", 2, "Python లో List మరియు Tuple మధ్య ప్రధాన తేడా ఏమిటి?", "List mutable, Tuple immutable.", "List mutable, Tuple immutable", "రెండూ immutable", "Tuple mutable, List immutable", "తేడా లేదు"),
+    _open_question("Coding", 1, "Array లోని అన్ని even numbers sum return చేసే function రాయండి.", "Array iterate చేసి even values filter చేసి sum return చేయండి; empty array handle చేయండి.", "te"),
+    _open_question("Coding", 2, "Two Sum పరిష్కరించండి: target వచ్చే రెండు numbers indices return చేయండి.", "O(n) time కోసం hash map ఉపయోగించండి.", "te"),
+]
+
+
 def _expand_category_questions(base_questions, min_count=MIN_QUESTIONS_PER_CATEGORY):
     if len(base_questions) >= min_count:
         return list(base_questions)
@@ -147,26 +257,39 @@ APTITUDE_QUESTIONS = _expand_category_questions(APTITUDE_BASE_QUESTIONS)
 BEHAVIORAL_QUESTIONS = _expand_category_questions(BEHAVIORAL_BASE_QUESTIONS)
 
 
-SEED_QUESTIONS = HR_QUESTIONS + TECHNICAL_QUESTIONS + APTITUDE_QUESTIONS + BEHAVIORAL_QUESTIONS
+SEED_QUESTIONS = (
+    HR_QUESTIONS
+    + TECHNICAL_QUESTIONS
+    + APTITUDE_QUESTIONS
+    + BEHAVIORAL_QUESTIONS
+    + CODING_QUESTIONS
+    + MULTILINGUAL_QUESTIONS
+)
 
 
 def seed_questions():
-    existing_by_prompt = {record.prompt: record for record in Question.query.all()}
+    existing_by_prompt = {
+        (record.prompt, getattr(record, "language_code", "en") or "en"): record
+        for record in Question.query.all()
+    }
     has_changes = False
 
     for item in SEED_QUESTIONS:
         prompt = item["prompt"]
-        options_json = json.dumps(item["options"], ensure_ascii=True)
+        options = item.get("options") or []
+        options_json = json.dumps(options, ensure_ascii=True) if options else None
+        language_code = item.get("language_code", "en") or "en"
 
         payload = {
             "category": item["category"],
             "ideal_answer": item["ideal_answer"],
             "difficulty": item["difficulty"],
             "options_json": options_json,
-            "correct_option": item["correct_option"],
+            "correct_option": item.get("correct_option"),
+            "language_code": language_code,
         }
 
-        existing = existing_by_prompt.get(prompt)
+        existing = existing_by_prompt.get((prompt, language_code))
         if not existing:
             db.session.add(Question(prompt=prompt, **payload))
             has_changes = True

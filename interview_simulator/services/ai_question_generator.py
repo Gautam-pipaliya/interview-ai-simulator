@@ -5,6 +5,11 @@ from typing import List
 
 import requests
 
+_REQUESTS_SESSION = requests.Session()
+_REQUESTS_SESSION.trust_env = False
+
+from .language import get_ai_language_instruction, get_language_config, normalize_language
+
 
 DIFFICULTY_TO_VALUE = {
     "Easy": 1,
@@ -58,7 +63,7 @@ def _fetch_available_model_ids(api_base_url: str, api_key: str):
     headers = {"Authorization": f"Bearer {api_key}"}
 
     try:
-        response = requests.get(endpoint, headers=headers, timeout=20)
+        response = _REQUESTS_SESSION.get(endpoint, headers=headers, timeout=20, proxies={"http": None, "https": None})
     except requests.RequestException:
         return []
 
@@ -183,6 +188,7 @@ def generate_ai_mcq_questions(
     count: int,
     role: str,
     focus_topics: str,
+    language_code: str = "en",
 ):
     if not api_key:
         raise AIQuestionGenerationError("API key is missing. Configure GROQ_API_KEY (or GROK_API_KEY).")
@@ -191,6 +197,8 @@ def generate_ai_mcq_questions(
         raise AIQuestionGenerationError("Invalid difficulty value.")
 
     count = max(1, min(int(count), 20))
+    language_code = normalize_language(language_code)
+    language_config = get_language_config(language_code)
     endpoint = api_base_url.rstrip("/") + "/chat/completions"
     model_candidates = _build_model_candidates(api_base_url, model)
     normalized_base = (api_base_url or "").strip().lower()
@@ -209,12 +217,14 @@ def generate_ai_mcq_questions(
 
     system_prompt = (
         "You are an expert interview designer. Return only valid JSON. "
-        "Generate practical interview MCQ questions."
+        "Generate practical interview MCQ questions. "
+        f"{get_ai_language_instruction(language_code)}"
     )
 
     user_prompt = (
         f"Generate {count} unique interview MCQ questions for category '{category}' and difficulty '{difficulty_label}'. "
         f"Role context: {role or 'General'}; Focus topics: {focus_topics or 'General interview preparation'}. "
+        f"Language: {language_config['name']} ({language_config['native_name']}). "
         "Return STRICT JSON array with this schema per item: "
         "{\"prompt\": string, \"options\": [string, string, string, string], \"correct_option\": string, \"ideal_answer\": string}. "
         "Rules: exactly 4 options; correct_option must match one option exactly; no markdown; no explanation text outside JSON."
@@ -241,7 +251,7 @@ def generate_ai_mcq_questions(
         }
 
         try:
-            response = requests.post(endpoint, headers=headers, json=payload, timeout=60)
+            response = _REQUESTS_SESSION.post(endpoint, headers=headers, json=payload, timeout=60, proxies={"http": None, "https": None})
         except requests.RequestException as exc:
             raise AIQuestionGenerationError(f"Could not reach AI provider: {exc}") from exc
 

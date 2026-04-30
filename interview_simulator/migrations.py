@@ -29,6 +29,7 @@ def run_startup_migrations():
         if _table_exists(connection, "questions"):
             _add_column_if_missing(connection, "questions", "options_json", "TEXT")
             _add_column_if_missing(connection, "questions", "correct_option", "VARCHAR(255)")
+            _add_column_if_missing(connection, "questions", "language_code", "VARCHAR(10) NOT NULL DEFAULT 'en'")
 
         if _table_exists(connection, "interview_sessions"):
             _add_column_if_missing(
@@ -36,4 +37,10 @@ def run_startup_migrations():
                 "interview_sessions",
                 "difficulty_level",
                 "VARCHAR(20) NOT NULL DEFAULT 'All'",
+            )
+            _add_column_if_missing(
+                connection,
+                "interview_sessions",
+                "language_code",
+                "VARCHAR(10) NOT NULL DEFAULT 'en'",
             )

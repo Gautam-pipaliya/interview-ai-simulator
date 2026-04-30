@@ -26,32 +26,34 @@ def _allowed_file(filename):
     return filename.lower().endswith(".pdf")
 
 
-def _resolve_groq_config():
-    api_key = (
+def _resolve_ai_config():
+    anthropic_api_key = current_app.config.get("ANTHROPIC_API_KEY", "").strip()
+    groq_api_key = (
         current_app.config.get("GROQ_API_KEY", "").strip()
         or current_app.config.get("GROK_API_KEY", "").strip()
         or current_app.config.get("AI_API_KEY", "").strip()
     )
-    api_base_url = (
+    groq_api_base_url = (
         current_app.config.get("GROQ_API_BASE_URL", "").strip()
         or current_app.config.get("GROK_API_BASE_URL", "").strip()
         or current_app.config.get("AI_API_BASE_URL", "").strip()
         or DEFAULT_GROQ_BASE_URL
     )
-    model = (
+    groq_model = (
         current_app.config.get("GROQ_MODEL", "").strip()
         or current_app.config.get("GROK_MODEL", "").strip()
         or current_app.config.get("AI_MODEL", "").strip()
         or DEFAULT_GROQ_MODEL
     )
 
-    if api_key.startswith("gsk_") and "api.x.ai" in api_base_url:
-        api_base_url = DEFAULT_GROQ_BASE_URL
+    if groq_api_key.startswith("gsk_") and "api.x.ai" in groq_api_base_url:
+        groq_api_base_url = DEFAULT_GROQ_BASE_URL
 
     return {
-        "api_key": api_key,
-        "api_base_url": api_base_url,
-        "model": model,
+        "anthropic_api_key": anthropic_api_key,
+        "groq_api_key": groq_api_key,
+        "groq_api_base_url": groq_api_base_url,
+        "groq_model": groq_model,
     }
 
 
@@ -83,16 +85,20 @@ def analyzer():
             flash("Could not read the PDF. Please upload a valid text-based resume.", "danger")
             return render_template("resume_analyzer.html", roles=roles, result=result)
 
-        groq_cfg = _resolve_groq_config()
-        if not groq_cfg["api_key"]:
-            flash("Groq API key is missing. Set GROQ_API_KEY (or GROK_API_KEY).", "danger")
+        ai_cfg = _resolve_ai_config()
+        if not ai_cfg["anthropic_api_key"] and not ai_cfg["groq_api_key"]:
+            flash(
+                "No AI key configured. Set ANTHROPIC_API_KEY or GROQ_API_KEY (or GROK_API_KEY).",
+                "danger",
+            )
             return render_template("resume_analyzer.html", roles=roles, result=result)
 
         try:
             analysis = analyze_resume_with_ai(
-                api_key=groq_cfg["api_key"],
-                api_base_url=groq_cfg["api_base_url"],
-                model=groq_cfg["model"],
+                api_key=ai_cfg["groq_api_key"],
+                anthropic_api_key=ai_cfg["anthropic_api_key"],
+                api_base_url=ai_cfg["groq_api_base_url"],
+                model=ai_cfg["groq_model"],
                 resume_text=resume_text,
                 role=role,
                 job_description=job_description,

@@ -6,8 +6,8 @@
         <div class="row g-3 align-items-center">
             <div class="col-md-8">
                 <span class="kicker">Interview Completed</span>
-                <h2 class="mt-2 mb-1">Overall Score: {{ interview_session.average_score }}%</h2>
-                <p class="mb-0">Performance Band: <strong>{{ score_band }}</strong></p>
+                <h2 class="mt-2 mb-1">{{ round_label }} Score: {{ interview_session.average_score }}%</h2>
+                <p class="mb-0">Performance Band: <strong>{{ score_band }}</strong> | Language: <strong>{{ language_config.native_name }}</strong></p>
             </div>
             <div class="col-md-4 d-flex flex-wrap justify-content-md-end gap-2">
                 <a class="btn btn-brand" href="{{ url_for('interview.export_csv', session_id=interview_session.id) }}">Download CSV</a>

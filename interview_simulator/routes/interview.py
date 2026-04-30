@@ -10,8 +10,24 @@ from sqlalchemy import func
 
 from ..extensions import db
 from ..models import InterviewResponse, InterviewSession, Question
+from ..services.coding import (
+    evaluate_code_submission,
+    get_programming_languages,
+    get_starter_code,
+    normalize_programming_language,
+)
 from ..services.ai_question_generator import AIQuestionGenerationError, generate_ai_mcq_questions
 from ..services.evaluator import evaluate_answer
+from ..services.language import (
+    ROUND_CARDS,
+    get_language_config,
+    get_language_options,
+    get_round_label,
+    get_take_time_phrase,
+    localize_feedback,
+    localize_mcq_feedback,
+    normalize_language,
+)
 
 
 interview_bp = Blueprint("interview", __name__, url_prefix="/interview")
@@ -50,10 +66,11 @@ def _to_utc_naive(dt_value):
     return dt_value
 
 
-def _get_categories():
+def _get_categories(language_code="en"):
+    language_code = normalize_language(language_code)
     rows = (
         Question.query.with_entities(Question.category)
-        .filter(Question.options_json.isnot(None), Question.correct_option.isnot(None))
+        .filter(Question.language_code == language_code)
         .distinct()
         .all()
     )
@@ -64,8 +81,9 @@ def _get_categories():
     return sorted(EXTRA_CATEGORIES)
 
 
-def _persist_generated_questions(items):
+def _persist_generated_questions(items, language_code="en"):
     created = []
+    language_code = normalize_language(language_code)
     for item in items:
         record = Question(
             category=item["category"],
@@ -74,6 +92,7 @@ def _persist_generated_questions(items):
             difficulty=item["difficulty"],
             options_json=json.dumps(item["options"], ensure_ascii=True),
             correct_option=item["correct_option"],
+            language_code=language_code,
         )
         db.session.add(record)
         created.append(record)
@@ -110,7 +129,7 @@ def _get_groq_runtime_config():
     }
 
 
-def _generate_questions_with_grok(*, category, difficulty_level, count, role_context, focus_topics):
+def _generate_questions_with_grok(*, category, difficulty_level, count, role_context, focus_topics, language_code):
     cfg = _get_groq_runtime_config()
     if not cfg["api_key"]:
         raise AIQuestionGenerationError(
@@ -126,6 +145,7 @@ def _generate_questions_with_grok(*, category, difficulty_level, count, role_con
         count=count,
         role=role_context,
         focus_topics=focus_topics,
+        language_code=language_code,
     )
 
 
@@ -139,21 +159,24 @@ def _normalize_practice_mode(mode_value):
     return candidate if candidate in PRACTICE_MODES else "balanced"
 
 
-def _build_availability_map():
+def _build_availability_map(language_code="en"):
+    language_code = normalize_language(language_code)
     levels = ["All", "Easy", "Medium", "Hard"]
-    categories = ["All", *_get_categories()]
+    categories = ["All", *_get_categories(language_code)]
 
     availability = {
         category: {level: 0 for level in levels}
         for category in categories
     }
 
-    questions = (
-        Question.query.filter(Question.options_json.isnot(None), Question.correct_option.isnot(None))
-        .all()
-    )
+    questions = Question.query.filter(Question.language_code == language_code).all()
 
     for item in questions:
+        if item.category == "Coding":
+            pass
+        elif not item.is_mcq:
+            continue
+
         level = item.difficulty_label
         availability["All"]["All"] += 1
         availability["All"][level] += 1
@@ -245,14 +268,20 @@ def _get_question_options_for_session(state, question_record):
     return shuffled
 
 
-def _evaluate_mcq_answer(question_record, selected_option):
+def _evaluate_mcq_answer(question_record, selected_option, language_code="en"):
     selected = (selected_option or "").strip()
     correct = (question_record.correct_option or "").strip()
 
     if not selected:
         return {
             "score": 0.0,
-            "feedback": f"No option selected. Correct answer: {correct}. {question_record.ideal_answer}",
+            "feedback": localize_mcq_feedback(
+                selected=selected,
+                correct=correct,
+                ideal_answer=question_record.ideal_answer,
+                is_correct=False,
+                language_code=language_code,
+            ),
             "missing_keywords": [],
         }
 
@@ -260,13 +289,25 @@ def _evaluate_mcq_answer(question_record, selected_option):
     if is_correct:
         return {
             "score": 100.0,
-            "feedback": f"Correct answer. {question_record.ideal_answer}",
+            "feedback": localize_mcq_feedback(
+                selected=selected,
+                correct=correct,
+                ideal_answer=question_record.ideal_answer,
+                is_correct=True,
+                language_code=language_code,
+            ),
             "missing_keywords": [],
         }
 
     return {
         "score": 0.0,
-        "feedback": f"Incorrect answer. Correct answer: {correct}. {question_record.ideal_answer}",
+        "feedback": localize_mcq_feedback(
+            selected=selected,
+            correct=correct,
+            ideal_answer=question_record.ideal_answer,
+            is_correct=False,
+            language_code=language_code,
+        ),
         "missing_keywords": [],
     }
 
@@ -292,8 +333,9 @@ def _save_current_answer_in_state(state, form_data):
 
     selected_option = form_data.get("selected_option", "").strip()
     text_answer = form_data.get("answer", "").strip()
+    code_answer = form_data.get("code_answer", "").strip()
     voice_answer = form_data.get("voice_answer", "").strip()
-    answer_value = selected_option or text_answer or voice_answer
+    answer_value = selected_option or code_answer or text_answer or voice_answer
 
     answers = state.get("answers", {})
     if answer_value:
@@ -313,6 +355,9 @@ def _save_current_answer_in_state(state, form_data):
         previous_value = float(time_map.get(str(index), 0.0) or 0.0)
         time_map[str(index)] = round(max(previous_value, time_taken), 2)
         state["time_taken"] = time_map
+
+    if form_data.get("programming_language"):
+        state["programming_language"] = normalize_programming_language(form_data.get("programming_language"))
 
     return state
 
@@ -366,20 +411,23 @@ def _finalize_session(session_id):
 @interview_bp.route("/setup", methods=["GET", "POST"])
 @login_required
 def setup():
-    categories = _get_categories()
+    selected_language = normalize_language(request.form.get("interview_language") if request.method == "POST" else request.args.get("language"))
+    categories = _get_categories(selected_language)
     difficulty_levels = list(DIFFICULTY_TO_VALUE.keys())
-    availability_map = _build_availability_map()
+    availability_map = _build_availability_map(selected_language)
 
     if request.method == "POST":
         question_source = (request.form.get("question_source", "bank") or "bank").strip().lower()
         if question_source not in {"bank", "ai"}:
             question_source = "bank"
 
-        selected_category = request.form.get("category", "All")
+        language_code = normalize_language(request.form.get("interview_language", "en"))
+        selected_category = request.form.get("round_type") or request.form.get("category", "All")
         custom_category = request.form.get("custom_category", "").strip()
         role_context = request.form.get("role_context", "").strip()
         focus_topics = request.form.get("focus_topics", "").strip()
         practice_mode = _normalize_practice_mode(request.form.get("practice_mode", "balanced"))
+        programming_language = normalize_programming_language(request.form.get("programming_language", "python"))
 
         category = custom_category or selected_category
         difficulty_level = _normalize_level(request.form.get("difficulty_level", "All"))
@@ -428,12 +476,13 @@ def setup():
                     count=question_count,
                     role_context=role_context,
                     focus_topics=focus_topics,
+                    language_code=language_code,
                 )
             except AIQuestionGenerationError as exc:
                 flash(str(exc), "danger")
                 return redirect(url_for("interview.setup"))
 
-            selected_questions = _persist_generated_questions(generated_questions)
+            selected_questions = _persist_generated_questions(generated_questions, language_code=language_code)
             selected_count = len(selected_questions)
 
             if selected_count < question_count:
@@ -447,9 +496,16 @@ def setup():
             else:
                 flash("Grok generated fresh questions for this round.", "success")
         else:
-            query = Question.query.filter(Question.options_json.isnot(None), Question.correct_option.isnot(None))
+            query = Question.query.filter(Question.language_code == language_code)
             if category != "All":
                 query = query.filter_by(category=category)
+            else:
+                query = query.filter(Question.category != "Coding")
+
+            if category == "Coding":
+                query = query.filter(Question.options_json.is_(None))
+            else:
+                query = query.filter(Question.options_json.isnot(None), Question.correct_option.isnot(None))
 
             difficulty_value = DIFFICULTY_TO_VALUE[difficulty_level]
             if difficulty_value is not None:
@@ -457,12 +513,12 @@ def setup():
 
             available_questions = query.all()
             if not available_questions:
-                flash("No MCQ questions available for selected category and level.", "warning")
+                flash("No questions available for selected round, language, and level.", "warning")
                 return redirect(url_for("interview.setup"))
 
             available_questions = _dedupe_questions_by_prompt(available_questions)
             if not available_questions:
-                flash("No unique MCQ questions available for selected category and level.", "warning")
+                flash("No unique questions available for selected round, language, and level.", "warning")
                 return redirect(url_for("interview.setup"))
 
             selected_count = min(question_count, len(available_questions))
@@ -485,6 +541,7 @@ def setup():
             user_id=current_user.id,
             category=category,
             difficulty_level=difficulty_level,
+            language_code=language_code,
             total_questions=selected_count,
         )
         db.session.add(interview_session)
@@ -496,10 +553,12 @@ def setup():
             "index": 0,
             "timer_seconds": timer_seconds,
             "difficulty_level": difficulty_level,
+            "language_code": language_code,
             "practice_mode": practice_mode,
             "answers": {},
             "time_taken": {},
             "question_source": question_source,
+            "programming_language": programming_language,
         }
 
         return redirect(url_for("interview.question"))
@@ -509,6 +568,14 @@ def setup():
         categories=categories,
         difficulty_levels=difficulty_levels,
         availability_map=availability_map,
+        availability_by_language={
+            item["code"]: _build_availability_map(item["code"])
+            for item in get_language_options()
+        },
+        round_cards=ROUND_CARDS,
+        language_options=get_language_options(),
+        selected_language=selected_language,
+        programming_languages=get_programming_languages(),
         default_source="bank",
         default_practice_mode="balanced",
     )
@@ -538,6 +605,8 @@ def question():
         session["interview_state"] = state
 
     answers = state.get("answers", {})
+    language_code = normalize_language(state.get("language_code", "en"))
+    programming_language = normalize_programming_language(state.get("programming_language", "python"))
 
     question_record = db.session.get(Question, question_ids[index])
     if not question_record:
@@ -546,6 +615,7 @@ def question():
         return redirect(url_for("interview.setup"))
 
     question_options = _get_question_options_for_session(state, question_record)
+    is_coding_round = question_record.category == "Coding" and not question_record.is_mcq
 
     selected_answer = answers.get(str(index), "")
     attempted_count = sum(1 for pos in range(len(question_ids)) if answers.get(str(pos)))
@@ -568,6 +638,13 @@ def question():
         attempt_flags=attempt_flags,
         question_source=state.get("question_source", "bank"),
         practice_mode=state.get("practice_mode", "balanced"),
+        language_config=get_language_config(language_code),
+        take_time_phrase=get_take_time_phrase(language_code),
+        round_label=get_round_label(question_record.category, language_code),
+        is_coding_round=is_coding_round,
+        programming_languages=get_programming_languages(),
+        selected_programming_language=programming_language,
+        starter_code=get_starter_code(programming_language),
     )
 
 
@@ -591,6 +668,7 @@ def submit_answer():
     answers = state.get("answers", {})
     time_map = state.get("time_taken", {})
     session_id = state["session_id"]
+    language_code = normalize_language(state.get("language_code", "en"))
 
     InterviewResponse.query.filter_by(session_id=session_id).delete(synchronize_session=False)
 
@@ -602,16 +680,22 @@ def submit_answer():
         answer_value = (answers.get(str(index), "") or "").strip()
 
         if question_record.is_mcq:
-            evaluation = _evaluate_mcq_answer(question_record, answer_value)
+            evaluation = _evaluate_mcq_answer(question_record, answer_value, language_code)
+        elif question_record.category == "Coding":
+            evaluation = evaluate_code_submission(answer_value, question_record.ideal_answer, language_code)
         else:
             if not answer_value:
-                evaluation = {
-                    "score": 0.0,
-                    "feedback": "No answer submitted.",
-                    "missing_keywords": [],
-                }
+                evaluation = localize_feedback(
+                    {
+                        "score": 0.0,
+                        "feedback": "No answer submitted.",
+                        "missing_keywords": [],
+                    },
+                    language_code,
+                )
             else:
                 evaluation = evaluate_answer(answer_value, question_record.ideal_answer)
+                evaluation = localize_feedback(evaluation, language_code)
 
         response = InterviewResponse(
             session_id=session_id,
@@ -775,6 +859,8 @@ def result(session_id):
         interview_session=interview_session,
         responses=enriched_rows,
         score_band=_score_band(interview_session.average_score),
+        language_config=get_language_config(interview_session.language_code),
+        round_label=get_round_label(interview_session.category, interview_session.language_code),
         overall_summary={
             "total_questions": total_questions,
             "attempted_count": attempted_count,

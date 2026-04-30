@@ -1,197 +1,128 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="landing-hero reveal">
-    <div class="row g-4 align-items-stretch">
-        <div class="col-lg-7">
-            <div class="panel hero-copy-block h-100">
-                <span class="kicker">The Interview Atelier</span>
-                <h1 class="headline-xl">Build Interview Reflexes, Not Just Notes.</h1>
-                <p class="lead-copy">
-                    Interview.AI turns practice into a polished training loop: timed rounds, instant scoring, and visible improvement paths.
-                    You prepare with intent, measure progress quickly, and walk into interviews with clarity.
-                </p>
-
-                <div class="chip-row mt-4">
-                    <span class="status-chip">Timed Simulation</span>
-                    <span class="status-chip">AI Resume Coaching</span>
-                    <span class="status-chip">Progress Analytics</span>
-                </div>
-
-                <div class="d-flex flex-wrap gap-2 mt-4">
-                    {% if current_user.is_authenticated %}
-                        <a class="btn btn-brand btn-lg" href="{{ url_for('interview.setup') }}">Start Interview Round</a>
-                        <a class="btn btn-soft btn-lg" href="{{ url_for('dashboard.dashboard') }}">Open Dashboard</a>
-                    {% else %}
-                        <a class="btn btn-brand btn-lg" href="{{ url_for('auth.register') }}">Create Account</a>
-                        <a class="btn btn-soft btn-lg" href="{{ url_for('auth.login') }}">Sign In</a>
-                    {% endif %}
-                </div>
-            </div>
+<section class="premium-hero reveal">
+    <img class="premium-hero-media" src="{{ url_for('static', filename='images/hero-illustration.svg') }}" alt="Interview.AI product workspace preview" loading="eager">
+    <div class="premium-hero-shade" aria-hidden="true"></div>
+    <div class="premium-hero-content">
+        <span class="kicker">AI Interview Platform</span>
+        <h1>Interview.AI</h1>
+        <p>
+            A multilingual interview practice studio with realistic rounds, AI-generated questions,
+            natural voice flow, a coding workspace, and measurable performance analytics.
+        </p>
+        <div class="hero-action-row">
+            {% if current_user.is_authenticated %}
+                <a class="btn btn-brand btn-lg" href="{{ url_for('interview.setup') }}">Start Interview Round</a>
+                <a class="btn btn-soft btn-lg" href="{{ url_for('dashboard.dashboard') }}">Open Dashboard</a>
+            {% else %}
+                <a class="btn btn-brand btn-lg" href="{{ url_for('auth.register') }}">Create Account</a>
+                <a class="btn btn-soft btn-lg" href="{{ url_for('auth.login') }}">Sign In</a>
+            {% endif %}
         </div>
-
-        <div class="col-lg-5">
-            <div class="panel hero-stats h-100">
-                <img
-                    class="hero-art"
-                    src="{{ url_for('static', filename='images/hero-illustration.svg') }}"
-                    alt="Interview dashboard illustration"
-                    loading="lazy"
-                >
-                <h3 class="panel-title">Live Prep Snapshot</h3>
-                <div class="signal-grid mt-3">
-                    <article class="signal-card">
-                        <p class="signal-label">Question Bank</p>
-                        <p class="signal-value">{{ total_questions }}</p>
-                    </article>
-                    <article class="signal-card">
-                        <p class="signal-label">Categories</p>
-                        <p class="signal-value">{{ total_categories }}</p>
-                    </article>
-                    <article class="signal-card signal-wide">
-                        <p class="signal-label">Coverage</p>
-                        <p class="mb-0">Technical, aptitude, behavioral, and role-driven interview tracks with realistic constraints.</p>
-                    </article>
-                </div>
-
-                <h5 class="mt-4 mb-2">Featured Categories</h5>
-                <div class="category-cloud">
-                    {% for category in categories[:10] %}
-                        <span class="category-pill">{{ category }}</span>
-                    {% endfor %}
-                </div>
-            </div>
+        <div class="hero-proof-row">
+            <span>{{ total_questions }} questions</span>
+            <span>{{ total_categories }} categories</span>
+            <span>5 interview languages</span>
+            <span>4 round types</span>
         </div>
     </div>
 </section>
 
-<section class="step-track reveal mt-5">
-    <div class="row g-3">
-        <div class="col-md-4">
-            <article class="step-item h-100">
-                <span class="step-number">01</span>
-                <h4>Configure The Round</h4>
-                <p>Pick category, level, timer, and count in under a minute.</p>
-            </article>
-        </div>
-        <div class="col-md-4">
-            <article class="step-item h-100">
-                <span class="step-number">02</span>
-                <h4>Answer Under Pressure</h4>
-                <p>Navigate quickly with timer discipline and keyboard-first flow.</p>
-            </article>
-        </div>
-        <div class="col-md-4">
-            <article class="step-item h-100">
-                <span class="step-number">03</span>
-                <h4>Review And Upgrade</h4>
-                <p>Use session feedback, trend charts, and resume insights to improve.</p>
-            </article>
-        </div>
-    </div>
+<section class="product-grid reveal mt-4">
+    <article class="product-card product-card-large">
+        <span class="kicker">Round Studio</span>
+        <h2>HR, Aptitude, Technical, and Coding rounds in one flow.</h2>
+        <p>
+            Configure difficulty, timing, language, question source, and practice mode before every round.
+            The same setup powers bank questions and live AI generation.
+        </p>
+    </article>
+    <article class="product-card">
+        <span class="product-icon">01</span>
+        <h3>Multilingual Voice</h3>
+        <p>English, Hindi, Gujarati, Marathi, and Telugu speech settings with listening and pause states.</p>
+    </article>
+    <article class="product-card">
+        <span class="product-icon">02</span>
+        <h3>Coding Workspace</h3>
+        <p>Syntax-aware editor, language modes, starter snippets, and browser-side JavaScript run output.</p>
+    </article>
+    <article class="product-card">
+        <span class="product-icon">03</span>
+        <h3>Performance Atlas</h3>
+        <p>Trend charts, weak-category insights, readiness index, consistency, and resume-match history.</p>
+    </article>
 </section>
 
-<section class="image-hover-showcase reveal mt-5">
-    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
-        <div>
-            <span class="kicker">Category Visuals</span>
-            <h3 class="mb-0 mt-1">Hover To Preview Focus Tracks</h3>
-        </div>
-        <p class="text-muted mb-0">Each image maps to a specific interview practice lane.</p>
+<section class="round-showcase reveal mt-4">
+    <div class="section-heading">
+        <span class="kicker">Practice Tracks</span>
+        <h2>Purpose-built lanes for every interview signal.</h2>
     </div>
-
     <div class="row g-3">
         <div class="col-md-6 col-xl-3">
             <article class="hover-image-card">
-                <img src="{{ url_for('static', filename='images/category-technical.svg') }}" alt="Technical interview track" loading="lazy">
-                <div class="hover-image-overlay">
-                    <h5>Technical</h5>
-                    <p>Practice APIs, Python, SQL, and core engineering reasoning.</p>
-                </div>
-            </article>
-        </div>
-        <div class="col-md-6 col-xl-3">
-            <article class="hover-image-card">
-                <img src="{{ url_for('static', filename='images/category-hr.svg') }}" alt="HR interview track" loading="lazy">
+                <img src="{{ url_for('static', filename='images/category-hr.svg') }}" alt="HR round preview" loading="lazy">
                 <div class="hover-image-overlay">
                     <h5>HR</h5>
-                    <p>Train communication, motivation, strengths, and role-fit responses.</p>
+                    <p>Motivation, confidence, culture fit, and role alignment.</p>
                 </div>
             </article>
         </div>
         <div class="col-md-6 col-xl-3">
             <article class="hover-image-card">
-                <img src="{{ url_for('static', filename='images/category-aptitude.svg') }}" alt="Aptitude interview track" loading="lazy">
+                <img src="{{ url_for('static', filename='images/category-aptitude.svg') }}" alt="Aptitude round preview" loading="lazy">
                 <div class="hover-image-overlay">
                     <h5>Aptitude</h5>
-                    <p>Build speed with percentages, ratios, logic, and numeric patterns.</p>
+                    <p>Numbers, logic, speed, ratios, and pattern recognition.</p>
                 </div>
             </article>
         </div>
         <div class="col-md-6 col-xl-3">
             <article class="hover-image-card">
-                <img src="{{ url_for('static', filename='images/category-behavioral.svg') }}" alt="Behavioral interview track" loading="lazy">
+                <img src="{{ url_for('static', filename='images/category-technical.svg') }}" alt="Technical round preview" loading="lazy">
                 <div class="hover-image-overlay">
-                    <h5>Behavioral</h5>
-                    <p>Use STAR-based answers for teamwork, pressure, and leadership.</p>
+                    <h5>Technical</h5>
+                    <p>CS fundamentals, backend concepts, APIs, testing, and systems.</p>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <article class="hover-image-card coding-preview-card">
+                <div class="code-preview-window">
+                    <span></span><span></span><span></span>
+                    <pre>function solve(input) {
+  return input.filter(Boolean);
+}</pre>
+                </div>
+                <div class="hover-image-overlay">
+                    <h5>Coding</h5>
+                    <p>Editor practice with syntax modes and run feedback.</p>
                 </div>
             </article>
         </div>
     </div>
 </section>
 
-<section class="feature-matrix reveal mt-5">
-    <div class="panel image-strip-panel mb-3">
-        <img
-            class="feature-strip-art"
-            src="{{ url_for('static', filename='images/features-strip.svg') }}"
-            alt="Visual summary of interview progress and features"
-            loading="lazy"
-        >
+<section class="insight-band reveal mt-4">
+    <div class="insight-copy">
+        <span class="kicker">Live Prep Snapshot</span>
+        <h2>One workspace from first question to final review.</h2>
     </div>
-    <div class="row g-3">
-        <div class="col-md-6 col-xl-3">
-            <article class="feature-tile h-100">
-                <p class="tile-index">01</p>
-                <h5>Answer Intelligence</h5>
-                <p>Scores are generated instantly so you can iterate faster per question.</p>
-            </article>
-        </div>
-        <div class="col-md-6 col-xl-3">
-            <article class="feature-tile h-100">
-                <p class="tile-index">02</p>
-                <h5>Pressure Controls</h5>
-                <p>Timed rounds and skip navigation mirror realistic interview behavior.</p>
-            </article>
-        </div>
-        <div class="col-md-6 col-xl-3">
-            <article class="feature-tile h-100">
-                <p class="tile-index">03</p>
-                <h5>Resume Deep Dive</h5>
-                <p>AI role-fit scoring and improvement cues for direct resume alignment.</p>
-            </article>
-        </div>
-        <div class="col-md-6 col-xl-3">
-            <article class="feature-tile h-100">
-                <p class="tile-index">04</p>
-                <h5>Trend Observatory</h5>
-                <p>See momentum, weak topics, and recent sessions in one command center.</p>
-            </article>
-        </div>
-    </div>
-</section>
-
-<section class="cta-ribbon reveal mt-5">
-    <div class="panel cta-panel d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div>
-            <p class="kicker mb-2">Ready To Level Up?</p>
-            <h3 class="mb-0">Make Your Next Interview Feel Familiar.</h3>
-        </div>
-        {% if current_user.is_authenticated %}
-            <a class="btn btn-brand" href="{{ url_for('interview.setup') }}">Start Practice</a>
-        {% else %}
-            <a class="btn btn-brand" href="{{ url_for('auth.register') }}">Get Started Free</a>
-        {% endif %}
+    <div class="insight-metrics">
+        <article>
+            <span>Question Bank</span>
+            <strong>{{ total_questions }}</strong>
+        </article>
+        <article>
+            <span>Categories</span>
+            <strong>{{ total_categories }}</strong>
+        </article>
+        <article>
+            <span>Languages</span>
+            <strong>5</strong>
+        </article>
     </div>
 </section>
 {% endblock %}

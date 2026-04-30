@@ -91,6 +91,70 @@ interview_simulator/
    http://127.0.0.1:5000
    ```
 
+## Deployment
+
+### Production locally
+
+- Set a strong secret key before starting the app.
+- Use a WSGI server instead of the Flask built-in reloader.
+
+PowerShell example:
+
+```powershell
+$env:SECRET_KEY = "your-production-secret"
+gunicorn run:app --bind 0.0.0.0:5000 --workers 3 --threads 2 --timeout 120
+```
+
+### Deploy with Docker
+
+Build and run the container:
+
+```powershell
+docker build -t interview-simulator .
+docker run -d -p 5000:5000 --name interview-simulator -e SECRET_KEY="your-production-secret" interview-simulator
+```
+
+If you want persistent data for SQLite, mount a host volume into `/app/interview_simulator`.
+
+### Deploy to cloud platforms
+
+- Use `Dockerfile` or `Procfile` for services like Render, Railway, Fly.io, or Heroku.
+- Create a GitHub repository, push this project, then connect the repo to your cloud service.
+- Set required environment variables in the cloud service settings:
+  - `SECRET_KEY`
+  - `AI_PROVIDER_DEFAULT` (default: `groq`)
+  - `GROQ_API_KEY`
+  - `GROQ_API_BASE_URL`
+  - `GROQ_MODEL`
+  - `DATABASE_URL` (recommended for production with PostgreSQL)
+
+Render example:
+
+1. Create a new Web Service on Render.
+2. Choose `Docker` environment or use the `Procfile` from this repo.
+3. Set the start command to:
+   ```bash
+gunicorn run:app --bind 0.0.0.0:$PORT --workers 3 --threads 2 --timeout 120
+```
+4. Set environment variables in Render Dashboard.
+5. Add a custom domain in Render's Domain settings and point your DNS.
+
+> For global availability and real deployment, use a managed database like PostgreSQL and set `DATABASE_URL` instead of SQLite.
+
+## Environment variables
+
+Copy `.env.example` to `.env` for local development and cloud reference.
+
+- `SECRET_KEY` — must be a strong production secret
+- `DATABASE_URL` — optional local fallback is SQLite, but recommended for production
+- `AI_PROVIDER_DEFAULT` — `groq` by default
+- `GROQ_API_KEY` — required for live AI question generation
+- `GROQ_API_BASE_URL` — default `https://api.groq.com/openai/v1`
+- `GROQ_MODEL` — default `llama-3.3-70b-versatile`
+- `FLASK_DEBUG` — set to `0` for production
+- `FLASK_HOST` — set to `0.0.0.0` when you want the app reachable from other machines in a local network
+- `FLASK_PORT` — default `5000`
+
 ## Real AI Question Generation (Groq)
 
 Use **Interview Setup** and select **Question Source = AI Live (Grok)** to generate fresh MCQ questions for each round.
