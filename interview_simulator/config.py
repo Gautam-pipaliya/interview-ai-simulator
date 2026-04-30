@@ -7,13 +7,11 @@ BASE_DIR = Path(__file__).resolve().parent
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL",
-        f"sqlite:///{BASE_DIR / 'app.db'}",
-    ).strip()
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{BASE_DIR / 'app.db'}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = str(BASE_DIR / "uploads")
     MAX_CONTENT_LENGTH = 4 * 1024 * 1024
+    SEND_FILE_MAX_AGE_DEFAULT = 604800
 
     AI_PROVIDER_DEFAULT = os.environ.get("AI_PROVIDER_DEFAULT", "groq").strip().lower()
     ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()

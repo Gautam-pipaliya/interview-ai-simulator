@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, request
 from flask_caching import Cache
 
 from .extensions import db, login_manager
@@ -26,7 +26,7 @@ def create_app():
 
     from .config import Config
 
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static', static_url_path='/static')
     app.config.from_object(Config)
 
     # Configure caching
@@ -36,6 +36,16 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+
+    @app.after_request
+    def apply_response_headers(response):
+        if request.path.startswith('/static/'):
+            response.headers['Cache-Control'] = 'public, max-age=604800, immutable'
+        response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+        response.headers.setdefault('X-Frame-Options', 'DENY')
+        response.headers.setdefault('Referrer-Policy', 'no-referrer-when-downgrade')
+        response.headers.setdefault('X-Accel-Buffering', 'no')
+        return response
 
     register_blueprints(app)
 
