@@ -13,4 +13,4 @@ ENV PORT=5000
 
 EXPOSE 5000
 
-CMD gunicorn run:app --bind 0.0.0.0:${PORT:-5000} --workers 3 --threads 2 --timeout 120
+CMD gunicorn -k eventlet run:app --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120

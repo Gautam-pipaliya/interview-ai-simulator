@@ -47,6 +47,16 @@ document.addEventListener("DOMContentLoaded", () => {
         nav.classList.toggle("is-scrolled", window.scrollY > 8);
     };
 
+    if (typeof io !== 'undefined') {
+        const socket = io();
+        socket.on('active_users', (payload) => {
+            const counter = document.getElementById('activeUserCount');
+            if (counter && payload && typeof payload.count === 'number') {
+                counter.textContent = payload.count;
+            }
+        });
+    }
+
     syncNavShadow();
     window.addEventListener("scroll", syncNavShadow, { passive: true });
 

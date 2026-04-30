@@ -5,11 +5,15 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask, request
 from flask_caching import Cache
+from flask_socketio import SocketIO, emit
 
 from .extensions import db, login_manager
 from .migrations import run_startup_migrations
 from .routes import register_blueprints
 from .seed import seed_questions
+
+socketio = SocketIO(cors_allowed_origins='*', async_mode='eventlet')
+active_user_count = 0
 
 
 def create_app():
@@ -36,6 +40,7 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    socketio.init_app(app)
 
     @app.after_request
     def apply_response_headers(response):
@@ -57,3 +62,17 @@ def create_app():
         logger.info("Application initialized successfully")
 
     return app
+
+
+@socketio.on('connect')
+def on_connect():
+    global active_user_count
+    active_user_count += 1
+    emit('active_users', {'count': active_user_count}, broadcast=True)
+
+
+@socketio.on('disconnect')
+def on_disconnect():
+    global active_user_count
+    active_user_count = max(active_user_count - 1, 0)
+    emit('active_users', {'count': active_user_count}, broadcast=True)
