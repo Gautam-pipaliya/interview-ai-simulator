@@ -63,10 +63,22 @@ body {
     font-family: var(--font-body);
     color: var(--ink-950);
     background: var(--bg-main);
+    scroll-behavior: smooth;
 }
 
 body {
     line-height: 1.55;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+}
+
+body.loading {
+    opacity: 0;
+    overflow: hidden;
+}
+
+body.loaded {
+    opacity: 1;
 }
 
 img,
@@ -1162,8 +1174,14 @@ html[data-theme="dark"] .progress {
 .reveal {
     opacity: 0;
     transform: translateY(18px);
-    transition: opacity 0.55s ease, transform 0.55s ease;
+    transition: opacity 0.45s ease, transform 0.45s ease;
     transition-delay: var(--delay, 0s);
+}
+
+body.loading .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
 }
 
 .reveal.is-visible {

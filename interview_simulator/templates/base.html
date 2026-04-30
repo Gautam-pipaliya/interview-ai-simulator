@@ -8,9 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preload" href="{{ url_for('static', filename='images/hero-illustration.svg') }}" as="image">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="app-shell">
+<body class="app-shell loading">
     <div class="cosmic-bg" aria-hidden="true">
         <span class="aura aura-1"></span>
         <span class="aura aura-2"></span>

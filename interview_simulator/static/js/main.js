@@ -60,6 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
     syncNavShadow();
     window.addEventListener("scroll", syncNavShadow, { passive: true });
 
+    window.addEventListener("load", () => {
+        document.body.classList.remove("loading");
+        document.body.classList.add("loaded");
+    });
+
     if (navLinks.length > 0) {
         const currentPath = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
 
