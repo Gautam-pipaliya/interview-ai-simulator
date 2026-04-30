@@ -4,9 +4,21 @@ import re
 from typing import List
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 _REQUESTS_SESSION = requests.Session()
 _REQUESTS_SESSION.trust_env = False
+
+# Add retry strategy
+retry_strategy = Retry(
+    total=3,
+    status_forcelist=[429, 500, 502, 503, 504],
+    backoff_factor=1
+)
+adapter = HTTPAdapter(max_retries=retry_strategy)
+_REQUESTS_SESSION.mount("http://", adapter)
+_REQUESTS_SESSION.mount("https://", adapter)
 
 from .language import get_ai_language_instruction, get_language_config, normalize_language
 

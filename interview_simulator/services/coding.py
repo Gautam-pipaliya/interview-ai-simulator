@@ -35,7 +35,8 @@ STARTER_SNIPPETS = {
     return None
 
 
-print(solve([2, 7, 11, 15]))
+# Example usage (remove in production)
+# print(solve([2, 7, 11, 15]))
 """,
     "javascript": """function solve(nums) {
   // Write your solution here

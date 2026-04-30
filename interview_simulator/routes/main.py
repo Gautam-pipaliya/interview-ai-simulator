@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, jsonify, render_template
 from flask_login import current_user
 
 from ..models import Question
@@ -17,3 +17,8 @@ def index():
         total_categories=len(categories),
         categories=categories,
     )
+
+
+@main_bp.route("/health")
+def health():
+    return jsonify({"status": "healthy", "questions": Question.query.count()})
